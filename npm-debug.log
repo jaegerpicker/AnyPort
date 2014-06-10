@@ -1,0 +1,65 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'node', '/usr/local/bin/npm', 'install', 'bower-cli' ]
+2 info using npm@1.3.11
+3 info using node@v0.10.19
+4 warn package.json node@0.0.0 No repository field.
+5 warn package.json sleep@1.1.2 'repositories' (plural) Not supported.
+5 warn package.json Please pick one as the 'repository' field
+6 verbose cache add [ 'bower-cli', null ]
+7 verbose cache add name=undefined spec="bower-cli" args=["bower-cli",null]
+8 verbose parsed url { protocol: null,
+8 verbose parsed url   slashes: null,
+8 verbose parsed url   auth: null,
+8 verbose parsed url   host: null,
+8 verbose parsed url   port: null,
+8 verbose parsed url   hostname: null,
+8 verbose parsed url   hash: null,
+8 verbose parsed url   search: null,
+8 verbose parsed url   query: null,
+8 verbose parsed url   pathname: 'bower-cli',
+8 verbose parsed url   path: 'bower-cli',
+8 verbose parsed url   href: 'bower-cli' }
+9 silly lockFile b5fc92bc-bower-cli bower-cli
+10 verbose lock bower-cli /Users/shawn/.npm/b5fc92bc-bower-cli.lock
+11 silly lockFile b5fc92bc-bower-cli bower-cli
+12 silly lockFile b5fc92bc-bower-cli bower-cli
+13 verbose addNamed [ 'bower-cli', '' ]
+14 verbose addNamed [ null, '*' ]
+15 silly lockFile 8942fdc3-bower-cli bower-cli@
+16 verbose lock bower-cli@ /Users/shawn/.npm/8942fdc3-bower-cli.lock
+17 silly addNameRange { name: 'bower-cli', range: '*', hasData: false }
+18 verbose url raw bower-cli
+19 verbose url resolving [ 'https://registry.npmjs.org/', './bower-cli' ]
+20 verbose url resolved https://registry.npmjs.org/bower-cli
+21 info trying registry request attempt 1 at 01:17:38
+22 http GET https://registry.npmjs.org/bower-cli
+23 http 404 https://registry.npmjs.org/bower-cli
+24 silly registry.get cb [ 404,
+24 silly registry.get   { date: 'Tue, 10 Jun 2014 05:17:38 GMT',
+24 silly registry.get     server: 'CouchDB/1.5.0 (Erlang OTP/R14B04)',
+24 silly registry.get     'content-type': 'application/json',
+24 silly registry.get     via: '1.1 varnish',
+24 silly registry.get     'cache-control': 'max-age=0',
+24 silly registry.get     'content-length': '52',
+24 silly registry.get     'accept-ranges': 'bytes',
+24 silly registry.get     age: '0',
+24 silly registry.get     'x-served-by': 'cache-sv61-SJC3, cache-ord1733-ORD',
+24 silly registry.get     'x-cache': 'MISS, MISS',
+24 silly registry.get     'x-cache-hits': '0, 0',
+24 silly registry.get     'x-timer': 'S1402377458.779293,VS0,VE136',
+24 silly registry.get     'keep-alive': 'timeout=10, max=50',
+24 silly registry.get     connection: 'Keep-Alive' } ]
+25 silly lockFile 8942fdc3-bower-cli bower-cli@
+26 silly lockFile 8942fdc3-bower-cli bower-cli@
+27 error 404 'bower-cli' is not in the npm registry.
+27 error 404 You should bug the author to publish it
+27 error 404
+27 error 404 Note that you can also install from a
+27 error 404 tarball, folder, or http url, or git url.
+28 error System Darwin 14.0.0
+29 error command "node" "/usr/local/bin/npm" "install" "bower-cli"
+30 error cwd /Users/shawn/Documents/dockerImgs/api
+31 error node -v v0.10.19
+32 error npm -v 1.3.11
+33 error code E404
+34 verbose exit [ 1, true ]
