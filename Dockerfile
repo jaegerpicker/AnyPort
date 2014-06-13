@@ -10,7 +10,8 @@ RUN /bin/bash -l -c "gem install bundler --no-ri --no-rdoc"
 RUN echo "source ~/.rvm/scripts/rvm" >> ~/.bashrc
 RUN /bin/bash -l -c "gem install rails --no-ri --no-rdoc"
 RUN npm install --silent -g bower
-RUN mkdir /code
+#RUN ln -s $HOME /code
+RUN mkdir -p /code
 WORKDIR /code
 RUN mkdir -p /code/api
 RUN mkdir -p /code/html
@@ -19,6 +20,7 @@ ADD ./gitKey /root/.ssh/id_rsa
 ADD ./gitKey.pub /root/.ssh/id_rsa.pub
 RUN chmod 600 /root/.ssh/id_rsa && chmod 600 /root/.ssh/id_rsa.pub
 RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+RUN echo "cloning"
 RUN git clone git@bitbucket.org:teamawesomemcpants/api-repo.git /code/api
 RUN git clone git@bitbucket.org:teamawesomemcpants/html-client.git /code/RPGThingWebClient
 WORKDIR /code/RPGThingWebClient
@@ -35,3 +37,4 @@ RUN echo $PYTHONPATH
 ENV DJANGO_SETTINGS_MODULE settings.currentenv
 RUN /code/api/rpgthing/manage.py syncdb --noinput && /code/api/rpgthing/manage.py migrate player --noinput &&\
 /code/api/rpgthing/manage.py migrate world --noinput && /code/api/rpgthing/manage.py migrate game --noinput && /code/api/rpgthing/manage.py migrate game --noinput && /code/api/rpgthing/manage.py migrate character --noinput && /code/api/rpgthing/manage.py migrate cortex --noinput
+VOLUME ["/code"]
