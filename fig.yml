@@ -1,0 +1,36 @@
+db:
+  image: orchardup/postgresql
+  environment:
+    - POSTGRESQL_USER=codeart
+    - POSTGRESQL_PASS=code_art
+    - POSTGRESQL_DB=rpg
+  ports:
+    - "5432:5432"
+memcache:
+  image: tutum/memcached
+  ports:
+    - "11211:11211"
+mongo:
+  image: dockerfile/mongodb
+  ports:
+    - "28017:28017"
+    - "27018:27018"
+    - "27017:27017"
+gameserver:
+  build: game_server/
+  command: /code/serverSide/game_server --addr :8080 --assets /code/serverSide
+  ports:
+    - "8080:8080"
+  links:
+    - memcache
+    - db
+    - web
+    - mongo
+web:
+  build: .
+  command: python /code/api/rpgthing/manage.py runserver 0.0.0.0:8000
+  ports:
+    - "8000:8000"
+  links:
+    - db
+    - memcache

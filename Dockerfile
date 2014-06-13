@@ -1,105 +1,37 @@
-FROM ubuntu:14.04
-MAINTAINER Shawn Campbell <jaegerpicker@gmail.com>
-# Mercurial
-RUN echo 'deb http://ppa.launchpad.net/mercurial-ppa/releases/ubuntu precise main' > /etc/apt/sources.list.d/mercurial.list
-RUN echo 'deb-src http://ppa.launchpad.net/mercurial-ppa/releases/ubuntu precise main' >> /etc/apt/sources.list.d/mercurial.list
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 323293EE
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B97B0AFCAA1A47F044F244A07FCC7D46ACCC4CF8
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
-RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main" > /etc/apt/sources.list.d/pgdg.list
-RUN echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/10gen.list
-RUN apt-get -qq update
-RUN apt-get -qqy install python ruby ruby-dev python-dev python-software-properties software-properties-common postgresql-9.3 postgresql-client-9.3 postgresql-contrib-9.3 mongodb-org node python-distribute python-pip curl git bzr mercurial memcached nginx openssh-server supervisor
-#setup postgres server
-USER postgres
-RUN    /etc/init.d/postgresql start &&\
-    psql --command "CREATE USER docker WITH SUPERUSER PASSWORD 'docker';" &&\
-    createdb -O docker docker
-RUN /etc/init.d/postgresql start && psql --command "CREATE USER codeart WITH SUPERUSER PASSWORD 'code_art';" && createdb -O codeart rpg
-RUN echo "host all  all    0.0.0.0/0  md5" >> /etc/postgresql/9.3/main/pg_hba.conf
-RUN echo "listen_addresses='*'" >> /etc/postgresql/9.3/main/postgresql.conf
-EXPOSE 5432
-VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
-#CMD ["/usr/lib/postgresql/9.3/bin/postgres", "-D", "/var/lib/postgresql/9.3/main", "-c", "config_file=/etc/postgresql/9.3/main/postgresql.conf"]
-#back to root w00t!
-USER root
-
-#MongoDB setup
-RUN mkdir -p /data/db
-EXPOSE 27017
-#CMD ["mongod"]
-
-#memcached setup
-EXPOSE 11211
-#CMD ["memcached", "-m", "64"]
-
-#nginx setup
-RUN echo "daemon off;" >> /etc/nginx/nginx.conf
-RUN mkdir /etc/nginx/ssl
-ADD default /etc/nginx/sites-available/default
-ADD default-ssl /etc/nginx/sites-available/default-ssl
-
-EXPOSE 80
-
-#CMD ["nginx"]
-
-#applications setup
-RUN mkdir -p /app/api
-RUN mkdir -p /app/html
-RUN mkdir -p /app/serverSide
-RUN mkdir -p /app/controlPanel
+FROM orchardup/python:2.7
+ENV PYTHONUNBUFFERED 1
+RUN apt-get update -qq && apt-get install -y python-pip python-virtualenv python-psycopg2 postgresql-9.3 postgresql-client-9.3 postgresql-contrib-9.3 nodejs npm git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libgdbm-dev libncurses5-dev automake libtool bison libffi-dev libpq-dev
+RUN curl -L https://get.rvm.io | bash -s stable
+RUN /bin/bash -l -c "rvm requirements"
+RUN /bin/bash -l -c "rvm install 2.1.2"
+RUN /bin/bash -l -c "rvm use 2.1.2 --default"
+RUN echo "gem: --no-ri --no-rdoc" > ~/.gemrc
+RUN /bin/bash -l -c "gem install bundler --no-ri --no-rdoc"
+RUN echo "source ~/.rvm/scripts/rvm" >> ~/.bashrc
+RUN /bin/bash -l -c "gem install rails --no-ri --no-rdoc"
+RUN npm install --silent -g bower
+RUN mkdir /code
+WORKDIR /code
+RUN mkdir -p /code/api
+RUN mkdir -p /code/html
 RUN mkdir -p /root/.ssh
 ADD ./gitKey /root/.ssh/id_rsa
 ADD ./gitKey.pub /root/.ssh/id_rsa.pub
+RUN chmod 600 /root/.ssh/id_rsa && chmod 600 /root/.ssh/id_rsa.pub
 RUN ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
-RUN ssh -v git@bitbucket.org
-RUN git clone git@bitbucket.org:teamawesomemcpants/api-repo.git /app/api
-RUN git clone git@bitbucket.org:teamawesomemcpants/html-client.git /app/html
-RUN git clone git@bitbucket.org:teamawesomemcpants/game-server.git /app/serverSide/src/game_server
-RUN apt-get -qqy install npm
-RUN npm install --silent -g bower
-WORKDIR /app/html
-#RUN npm install
-#### TODO: bower isn't working not sure why need to fix
-#RUN bower --config.interactive=false -V --allow-root install
-WORKDIR /app/api
-RUN apt-get -qqy install libpq-dev
-RUN pip install -r /app/api/requirements.txt
-RUN pip install uwsgi
-RUN rm /app/api/rpgthing/settings/currentenv.py
-RUN cd /app/api/rpgthing/settings && ln -s smc.py currentenv.py
-ENV PYTHONPATH $PYTHONPATH:/app/api:/app/api/rpgthing
+RUN git clone git@bitbucket.org:teamawesomemcpants/api-repo.git /code/api
+RUN git clone git@bitbucket.org:teamawesomemcpants/html-client.git /code/RPGThingWebClient
+WORKDIR /code/RPGThingWebClient
+RUN ln -s /usr/bin/nodejs /usr/bin/node
+RUN which bower
+RUN bower install --config.interactive=false -V --allow-root
+WORKDIR /code/api
+RUN /bin/bash -c "[ -e /code/api/rpgthing/settings/currentenv.py ] && rm /code/api/rpgthing/settings/currentenv.py || echo 'files does not exist';"
+RUN ln -s /code/api/rpgthing/settings/smc.py /code/api/rpgthing/settings/currentenv.py
+run git pull
+RUN pip install -r requirements.txt
+ENV PYTHONPATH $PYTHONPATH:/code/api:/code/api/rpgthing
 RUN echo $PYTHONPATH
 ENV DJANGO_SETTINGS_MODULE settings.currentenv
-RUN /etc/init.d/postgresql start && cd /app/api/rpgthing && pwd && ls -al settings/ && /app/api/rpgthing/manage.py syncdb --noinput && /app/api/rpgthing/manage.py migrate player --noinput &&\
-/app/api/rpgthing/manage.py migrate world --noinput && /app/api/rpgthing/manage.py migrate game --noinput && /app/api/rpgthing/manage.py migrate game --noinput && /app/api/rpgthing/manage.py migrate character --noinput && /app/api/rpgthing/manage.py migrate cortex --noinput
-#RUN /etc/init.d/postgresql start && cd /app/api/rpgthing && pwd && ls -al settings/
-#CMD ["python", "/app/api/rpgthing/manage.py", "runserver"]
-EXPOSE 8000
-#Setup golang
-RUN curl -s https://go.googlecode.com/files/go1.2.linux-amd64.tar.gz | tar -v -C /usr/local/ -xz
-ENV PATH  /usr/local/go/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
-ENV GOPATH  /go:/app:/app/serverSide
-RUN mkdir -p /go/bin && mkdir -p /go/pkg && mkdir -p /go/src && mkdir -p /app/serverSide/bin && mkdir -p /app/serverSide/pkg
-ENV GOROOT  /usr/local/go
-ADD webapp /app/controlPanel
-WORKDIR /app/serverSide/
-RUN /bin/echo $GOPATH
-RUN pwd && ls -al && /bin/echo $GOPATH && /bin/echo $GOROOT
-RUN go get game_server
-RUN go build game_server
-#CMD ["./RPGThingServerSide", "--addr", ":8080"]
-EXPOSE 8080
-RUN mkdir /var/run/sshd
-RUN echo 'root:awesome' |chpasswd
-
-EXPOSE 22
-#CMD    ["/usr/sbin/sshd", "-D"]
-ADD ./start.sh /app/
-WORKDIR /app
-RUN chmod +x /app/start.sh
-RUN mkdir -p /var/log/supervisor
-ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-CMD ["/usr/bin/supervisord"]
-#CMD ["/bin/bash"]
-#CMD ["/bin/bash", "/app/start.sh"]
+RUN /code/api/rpgthing/manage.py syncdb --noinput && /code/api/rpgthing/manage.py migrate player --noinput &&\
+/code/api/rpgthing/manage.py migrate world --noinput && /code/api/rpgthing/manage.py migrate game --noinput && /code/api/rpgthing/manage.py migrate game --noinput && /code/api/rpgthing/manage.py migrate character --noinput && /code/api/rpgthing/manage.py migrate cortex --noinput
