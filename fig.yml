@@ -10,17 +10,6 @@ memcache:
   image: tutum/memcached
   ports:
     - "11211:11211"
-home-vol:
-  image: busybox
-  volume:
-    - home
-  volumes-from:
-    - webserver
-    - gameserver
-  name:
-    - home-vol
-  command:
-    - echo true
 mongo:
   image: dockerfile/mongodb
   ports:
